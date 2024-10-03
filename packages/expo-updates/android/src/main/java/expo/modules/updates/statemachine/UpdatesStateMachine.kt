@@ -52,7 +52,7 @@ class UpdatesStateMachine(
   /**
    * The context
    */
-  var context: UpdatesStateContext = UpdatesStateContext()
+  var context: UpdatesStateContext = UpdatesStateContext(sequenceNumber = 0)
     private set
 
   /**
@@ -60,7 +60,7 @@ class UpdatesStateMachine(
    */
   private fun reset() {
     state = UpdatesStateValue.Idle
-    context = UpdatesStateContext()
+    context = UpdatesStateContext(sequenceNumber = context.sequenceNumber + 1)
     logger.info("Updates state change: reset, context = ${context.json}")
     sendChangeEventToJS(UpdatesStateEvent.Restart())
   }
@@ -131,14 +131,18 @@ class UpdatesStateMachine(
      */
     private fun reduceContext(context: UpdatesStateContext, event: UpdatesStateEvent): UpdatesStateContext {
       return when (event) {
-        is UpdatesStateEvent.Check -> context.copy(isChecking = true)
+        is UpdatesStateEvent.Check -> context.copy(
+          isChecking = true,
+          sequenceNumber = context.sequenceNumber + 1
+        )
         is UpdatesStateEvent.CheckCompleteUnavailable -> context.copy(
           isChecking = false,
           checkError = null,
           latestManifest = null,
           rollback = null,
           isUpdateAvailable = false,
-          lastCheckForUpdateTime = Date()
+          lastCheckForUpdateTime = Date(),
+          sequenceNumber = context.sequenceNumber + 1
         )
         is UpdatesStateEvent.CheckCompleteWithRollback -> context.copy(
           isChecking = false,
@@ -146,7 +150,8 @@ class UpdatesStateMachine(
           latestManifest = null,
           rollback = UpdatesStateContextRollback(event.commitTime),
           isUpdateAvailable = true,
-          lastCheckForUpdateTime = Date()
+          lastCheckForUpdateTime = Date(),
+          sequenceNumber = context.sequenceNumber + 1
         )
         is UpdatesStateEvent.CheckCompleteWithUpdate -> context.copy(
           isChecking = false,
@@ -154,23 +159,30 @@ class UpdatesStateMachine(
           latestManifest = event.manifest,
           rollback = null,
           isUpdateAvailable = true,
-          lastCheckForUpdateTime = Date()
+          lastCheckForUpdateTime = Date(),
+          sequenceNumber = context.sequenceNumber + 1
         )
         is UpdatesStateEvent.CheckError -> context.copy(
           isChecking = false,
           checkError = event.error,
-          lastCheckForUpdateTime = Date()
+          lastCheckForUpdateTime = Date(),
+          sequenceNumber = context.sequenceNumber + 1
         )
-        is UpdatesStateEvent.Download -> context.copy(isDownloading = true)
+        is UpdatesStateEvent.Download -> context.copy(
+          isDownloading = true,
+          sequenceNumber = context.sequenceNumber + 1
+        )
         is UpdatesStateEvent.DownloadComplete -> context.copy(
           isDownloading = false,
           downloadError = null,
-          isUpdatePending = true
+          isUpdatePending = true,
+          sequenceNumber = context.sequenceNumber + 1
         )
         is UpdatesStateEvent.DownloadCompleteWithRollback -> context.copy(
           isDownloading = false,
           downloadError = null,
-          isUpdatePending = true
+          isUpdatePending = true,
+          sequenceNumber = context.sequenceNumber + 1
         )
         is UpdatesStateEvent.DownloadCompleteWithUpdate -> context.copy(
           isDownloading = false,
@@ -179,14 +191,17 @@ class UpdatesStateMachine(
           downloadedManifest = event.manifest,
           rollback = null,
           isUpdatePending = true,
-          isUpdateAvailable = true
+          isUpdateAvailable = true,
+          sequenceNumber = context.sequenceNumber + 1
         )
         is UpdatesStateEvent.DownloadError -> context.copy(
           isDownloading = false,
-          downloadError = event.error
+          downloadError = event.error,
+          sequenceNumber = context.sequenceNumber + 1
         )
         is UpdatesStateEvent.Restart -> context.copy(
-          isRestarting = true
+          isRestarting = true,
+          sequenceNumber = context.sequenceNumber + 1
         )
       }
     }

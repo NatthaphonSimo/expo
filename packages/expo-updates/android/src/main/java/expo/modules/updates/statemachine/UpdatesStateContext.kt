@@ -22,9 +22,9 @@ data class UpdatesStateContext(
   val rollback: UpdatesStateContextRollback? = null,
   val checkError: UpdatesStateError? = null,
   val downloadError: UpdatesStateError? = null,
-  val lastCheckForUpdateTime: Date? = null
+  val lastCheckForUpdateTime: Date? = null,
+  val sequenceNumber: Int
 ) {
-
   val json: Map<String, Any>
     get() {
       val map: MutableMap<String, Any> = mutableMapOf(
@@ -32,7 +32,8 @@ data class UpdatesStateContext(
         "isUpdatePending" to isUpdatePending,
         "isChecking" to isChecking,
         "isDownloading" to isDownloading,
-        "isRestarting" to isRestarting
+        "isRestarting" to isRestarting,
+        "sequenceNumber" to sequenceNumber
       )
       if (latestManifest != null) {
         map["latestManifest"] = latestManifest
@@ -76,6 +77,7 @@ data class UpdatesStateContext(
         putBoolean("isChecking", isChecking)
         putBoolean("isDownloading", isDownloading)
         putBoolean("isRestarting", isRestarting)
+        putInt("sequenceNumber", sequenceNumber)
         if (latestManifest != null) {
           putString("latestManifestString", latestManifest.toString())
         }
